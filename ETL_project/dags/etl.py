@@ -4,6 +4,7 @@ from airflow.decorators import task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.utils.dates import days_ago
 import json
+import os
 
 
 ## Define the DAG
@@ -40,13 +41,13 @@ with DAG(
 
 
     ## Step 2: Extract the NASA API Data(APOD)-Astronomy Picture of the Day[Extract pipeline]
-    ## https://api.nasa.gov/planetary/apod?api_key=7BbRvxo8uuzas9U3ho1RwHQQCkZIZtJojRIr293q
+    ## API key is loaded from .env (NASA_API_KEY) — never hardcode secrets in source code
     extract_apod=SimpleHttpOperator(
         task_id='extract_apod',
         http_conn_id='nasa_api',  ## Connection ID Defined In Airflow For NASA API
         endpoint='planetary/apod', ## NASA API enpoint for APOD
         method='GET',
-        data={"api_key":"{{ conn.nasa_api.extra_dejson.api_key}}"}, ## USe the API Key from the connection
+        data={"api_key": "{{ conn.nasa_api.extra_dejson.get('api_key') or var.value.get('nasa_api_key') }}"},  ## Key from Airflow connection extra (set via .env → NASA_API_KEY)
         response_filter=lambda response:response.json(), ## Convert response to json
     )
 

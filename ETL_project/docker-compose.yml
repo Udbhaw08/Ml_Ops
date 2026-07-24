@@ -1,0 +1,47 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - airflow_network
+
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airflow_webserver
+    environment:
+      AIRFLOW_HOME: /usr/local/airflow
+      AIRFLOW__CORE__DAGS_FOLDER: /usr/local/airflow/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql://postgres:postgres@postgres_db:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - ./logs:/usr/local/airflow/logs
+    depends_on:
+      - postgres
+    networks:
+      - airflow_network
+    command: >
+      sh -c "airflow db init &&
+             airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true &&
+             airflow webserver"
+
+networks:
+  airflow_network:
+    external: false
+
+volumes:
+  postgres_data:
