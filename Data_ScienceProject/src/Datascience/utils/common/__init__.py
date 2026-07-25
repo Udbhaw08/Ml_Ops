@@ -35,6 +35,18 @@ def read_yaml(path_to_yaml:Path)->ConfigBox:
         
     
 @ensure_annotations
+def create_directories(path_to_directories:list[Path]):
+    """
+    create directories
+    Args:
+    path_to_directories (list[Path]): path like input 
+    """
+    for path in path_to_directories:
+        os.makedirs(path,exist_ok=True)
+        logger.info(f"directory: {path} created successfully")
+
+
+@ensure_annotations
 def save_json(path_to_json:Path,data:dict):
     """
     save json file
